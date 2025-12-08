@@ -1,0 +1,49 @@
+import torch
+import os
+from ultralytics.nn.tasks import DetectionModel # Import the specific class type for checking
+
+# --- Configuration (Adjust these paths for your local setup) ---
+OLD_MODEL_PATH = r"REPLACE_WITH_YOUR_OWN_PATH\best.pt"  # Path to the original model file
+NEW_MODEL_PATH = r'REPLACE_WITH_YOUR_OWN_PATH\best_fixed.pt'  # Path to save the modified model file
+
+# The complete list of 82 class names (COCO 0-79, Custom 80-81)
+correct_names = {
+    0: 'person', 1: 'bicycle', 2: 'car', 3: 'motorcycle', 4: 'airplane', 5: 'bus', 6: 'train', 7: 'truck', 8: 'boat', 9: 'traffic light', 
+    10: 'fire hydrant', 11: 'stop sign', 12: 'parking meter', 13: 'bench', 14: 'bird', 15: 'cat', 16: 'dog', 17: 'horse', 18: 'sheep', 19: 'cow', 
+    20: 'elephant', 21: 'bear', 22: 'zebra', 23: 'giraffe', 24: 'backpack', 25: 'umbrella', 26: 'handbag', 27: 'tie', 28: 'suitcase', 29: 'frisbee', 
+    30: 'skis', 31: 'snowboard', 32: 'sports ball', 33: 'kite', 34: 'baseball bat', 35: 'baseball glove', 36: 'skateboard', 37: 'surfboard', 38: 'tennis racket', 39: 'bottle', 
+    40: 'wine glass', 41: 'cup', 42: 'fork', 43: 'knife', 44: 'spoon', 45: 'bowl', 46: 'banana', 47: 'apple', 48: 'sandwich', 49: 'orange', 
+    50: 'broccoli', 51: 'carrot', 52: 'hot dog', 53: 'pizza', 54: 'donut', 55: 'cake', 56: 'chair', 57: 'couch', 58: 'potted plant', 59: 'bed', 
+    60: 'dining table', 61: 'toilet', 62: 'tv', 63: 'laptop', 64: 'mouse', 65: 'remote', 66: 'keyboard', 67: 'cell phone', 68: 'microwave', 69: 'oven', 
+    70: 'toaster', 71: 'sink', 72: 'refrigerator', 73: 'book', 74: 'clock', 75: 'vase', 76: 'scissors', 77: 'teddy bear', 78: 'hair drier', 79: 'toothbrush', 
+    80: 'Box', 81: 'RedBall' # Class 80 and 81 are custom classes
+}
+
+# --- Script Execution ---
+
+try:
+    # 1. Load the full dictionary, using 'cpu' as a safe default map_location
+    full_model_data = torch.load(OLD_MODEL_PATH, map_location='cpu', weights_only=False)
+
+    # 2. Access the DetectionModel object from the 'model' key
+    model_obj = full_model_data.get('model')
+
+    if not isinstance(model_obj, DetectionModel):
+        raise TypeError(f"Expected 'model' key to contain a DetectionModel object, found: {type(model_obj)}")
+
+    # 3. CRITICAL STEP: Access the internal 'names' attribute of the DetectionModel object
+    # The 'names' attribute holds the class dictionary
+    model_obj.names = correct_names
+
+    # 4. Confirm the change (Optional check)
+    print(f"✅ Class names successfully updated in the DetectionModel object.")
+    print(f"New class count in model object: {len(model_obj.names)}")
+
+    # 5. Save the full model data (which now contains the modified object) back into a new file
+    torch.save(full_model_data, NEW_MODEL_PATH)
+    
+    print(f"\n🎉 Success! Class names fixed and saved to: {NEW_MODEL_PATH}")
+
+except Exception as e:
+    print(f"❌ An error occurred: {e}")
+    print("\nTroubleshooting: Ensure you have the 'ultralytics' library installed: pip install ultralytics")
